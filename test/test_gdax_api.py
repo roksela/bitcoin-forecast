@@ -1,7 +1,9 @@
 import unittest
 import logging
 import sys
-from bitcoin_forecast import GDAXApi
+import csv
+import os
+from bitcoin_forecast import GDAXApi, GDAXRatelog
 from datetime import datetime
 
 
@@ -20,9 +22,13 @@ class TestGDAXApi(unittest.TestCase):
                           'highest_price': 2316.91, 'opening_price': 2304.06, 'closing_price': 2303.29,
                           'volume_of_trading': 508.03418288999904}
 
+    RATE_LOG_FILE_PATH = 'test_rate_log_2017_05.csv'
+    LOG_HEADERS = ['start_time', 'end_time', 'lowest_price', 'highest_price',
+                   'opening_price', 'closing_price', 'volume_of_trading']
+
     def setUp(self):
         logging.basicConfig(format='%(asctime)s | %(name)s | %(levelname)s | %(message)s',
-                            level=logging.DEBUG, stream=sys.stdout)
+                            level=logging.INFO, stream=sys.stdout)
 
     def test_get_products(self):
         api = GDAXApi()
@@ -52,6 +58,52 @@ class TestGDAXApi(unittest.TestCase):
         self.assertEqual(self.FIRST_RATE_IN_RANGE, rates[0].__dict__)
         self.assertEqual(self.LAST_RATE_IN_RANGE, rates[num_of_periods - 1].__dict__)
 
+    def test_gdax_rate_log_create(self):
+        product_id = 'BTC-USD'
+        start = '2017-05-01T00:00:00.000Z'
+        end = '2017-06-01T00:00:00.000Z'
+        granularity = 60 * 60
+        num_of_periods = 31 * 24
+
+        api = GDAXApi()
+        rates = api.get_historic_rates(product_id, start, end, granularity)
+
+        log = GDAXRatelog(self.RATE_LOG_FILE_PATH)
+        log.append(rates)
+
+        with open(self.RATE_LOG_FILE_PATH, "r") as csv_file:
+            reader = csv.reader(csv_file)
+            headers = next(reader)
+            row_count = sum(1 for row in csv_file)
+
+        self.assertListEqual(headers, self.LOG_HEADERS)
+        self.assertEqual(num_of_periods, row_count)
+
+        os.remove(self.RATE_LOG_FILE_PATH)
+
+    def test_gdax_rate_log_append(self):
+        product_id = 'BTC-USD'
+        start = '2017-05-01T00:00:00.000Z'
+        end = '2017-06-01T00:00:00.000Z'
+        granularity = 60 * 60
+        num_of_periods = 31 * 24
+
+        api = GDAXApi()
+        rates = api.get_historic_rates(product_id, start, end, granularity)
+
+        log = GDAXRatelog(self.RATE_LOG_FILE_PATH)
+        log.append(rates)
+        log.append(rates)
+
+        with open(self.RATE_LOG_FILE_PATH, "r") as csv_file:
+            reader = csv.reader(csv_file)
+            headers = next(reader)
+            row_count = sum(1 for row in csv_file)
+
+        self.assertListEqual(headers, self.LOG_HEADERS)
+        self.assertEqual(2 * num_of_periods, row_count)
+
+        os.remove(self.RATE_LOG_FILE_PATH)
 
 if __name__ == '__main__':
     unittest.main()

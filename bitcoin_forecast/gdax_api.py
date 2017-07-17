@@ -1,5 +1,7 @@
 import requests
 import logging
+import csv
+import os
 from datetime import datetime
 from operator import itemgetter
 
@@ -15,9 +17,6 @@ class GDAXApi(object):
 
     API_URL = 'https://api.gdax.com'
     MAX_NUM_DATA_POINTS_PER_PAGE = 200
-
-    def __init__(self):
-        pass
 
     def get_products(self):
         """
@@ -105,7 +104,7 @@ class GDAXApi(object):
         :return: list of rates in format [[time, low, high, open, close, volume],...]
         """
         params = {'start': start, 'end': end, 'granularity': granularity}
-        logging.getLogger('GDAXApi').debug('page | start={}, end={}, granularity={}'.format(start, end, granularity))
+        logging.getLogger('GDAXApi').debug('_get_raw_partial_rates | start={}, end={}, granularity={}'.format(start, end, granularity))
 
         response = requests.get('{}/products/{}/candles'.format(self.API_URL, product_id), params=params)
         raw_partial_rates = response.json()
@@ -146,3 +145,34 @@ class GDAXRate(object):
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
+
+    @staticmethod
+    def get_field_names():
+        return ['start_time', 'end_time', 'lowest_price', 'highest_price',
+                'opening_price', 'closing_price', 'volume_of_trading']
+
+
+class GDAXRatelog(object):
+    """
+    CSV Log File for storing historical rates.
+    """
+    def __init__(self, file_path):
+        self.file_path = file_path
+
+    def append(self, gdax_rates):
+        """
+        Append rates to the CSV log. File is created if it doesn't exist.
+
+        :param gdax_rates: a list of GDAXRate objects
+        """
+        is_existing_file = os.path.isfile(self.file_path)
+        field_names = GDAXRate.get_field_names()
+
+        mode = 'a' if is_existing_file else 'w'
+
+        with open(self.file_path, mode) as csv_file:
+            writer = csv.DictWriter(csv_file, fieldnames=field_names)
+            if not is_existing_file:
+                writer.writeheader()
+            for rate in gdax_rates:
+                writer.writerow(rate.__dict__)
