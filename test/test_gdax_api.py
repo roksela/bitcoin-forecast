@@ -1,4 +1,6 @@
 import unittest
+import logging
+import sys
 from bitcoin_forecast import GDAXApi
 from datetime import datetime
 
@@ -17,6 +19,10 @@ class TestGDAXApi(unittest.TestCase):
                           'end_time': datetime(2017, 6, 1, 0, 0), 'lowest_price': 2295.23,
                           'highest_price': 2316.91, 'opening_price': 2304.06, 'closing_price': 2303.29,
                           'volume_of_trading': 508.03418288999904}
+
+    def setUp(self):
+        logging.basicConfig(format='%(asctime)s | %(name)s | %(levelname)s | %(message)s',
+                            level=logging.DEBUG, stream=sys.stdout)
 
     def test_get_products(self):
         api = GDAXApi()

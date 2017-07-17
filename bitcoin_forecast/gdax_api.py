@@ -1,4 +1,5 @@
 import requests
+import logging
 from datetime import datetime
 from operator import itemgetter
 
@@ -26,6 +27,8 @@ class GDAXApi(object):
         """
         response = requests.get(self.API_URL + '/products')
         products = response.json()
+
+        logging.getLogger('GDAXApi').debug('products={}'.format(products))
         return [product['id'] for product in products]
 
     def get_historic_rates(self, product_id, start, end, granularity):
@@ -43,6 +46,7 @@ class GDAXApi(object):
         """
 
         periods = self._get_data_point_ranges(start, end, granularity)
+        logging.getLogger('GDAXApi').debug('starting pagination | periods={}'.format(periods))
 
         historic_rates = []
         for range_start, range_end in periods:
@@ -50,7 +54,6 @@ class GDAXApi(object):
             sorted_raw_partial_rates = sorted(raw_partial_rates, key=itemgetter(0))
 
             partial_rates = [self._convert_to_rate(raw_rate, granularity) for raw_rate in sorted_raw_partial_rates]
-
             historic_rates += partial_rates
 
         return historic_rates
@@ -102,9 +105,14 @@ class GDAXApi(object):
         :return: list of rates in format [[time, low, high, open, close, volume],...]
         """
         params = {'start': start, 'end': end, 'granularity': granularity}
+        logging.getLogger('GDAXApi').debug('page | start={}, end={}, granularity={}'.format(start, end, granularity))
 
-        r = requests.get('{}/products/{}/candles'.format(self.API_URL, product_id), params=params)
-        return r.json()
+        response = requests.get('{}/products/{}/candles'.format(self.API_URL, product_id), params=params)
+        raw_partial_rates = response.json()
+
+        logging.getLogger('GDAXApi').debug('raw_partial_rates.count={}'.format(len(raw_partial_rates)))
+        logging.getLogger('GDAXApi').debug('raw_partial_rates={}'.format(raw_partial_rates))
+        return raw_partial_rates
 
     def _convert_to_rate(self, raw_rate, granularity):
         """
@@ -132,13 +140,6 @@ class GDAXRate(object):
         self.opening_price = opening_price
         self.closing_price = closing_price
         self.volume_of_trading = volume_of_trading
-
-    # def __repr__(self):
-    #     return "<GDAXRate start_time:%s end_time:%s lowest_price:%s highest_price:%s" \
-    #            " opening_price:%s closing_price: %s volume_of_trading:%s>" % (self.start_time, self.end_time,
-    #                                                                           self.lowest_price, self.highest_price,
-    #                                                                           self.opening_price, self.closing_price,
-    #                                                                           self.volume_of_trading)
 
     def __repr__(self):
         return "<GDAXRate %s>" % self.__dict__
