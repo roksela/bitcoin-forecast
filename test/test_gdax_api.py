@@ -3,7 +3,7 @@ import logging
 import sys
 import csv
 import os
-from bitcoin_forecast import GDAXApi, GDAXRatelog
+from bitcoin_forecast import GDAXApi, GDAXRateLog
 from datetime import datetime
 
 
@@ -68,7 +68,7 @@ class TestGDAXApi(unittest.TestCase):
         api = GDAXApi()
         rates = api.get_historic_rates(product_id, start, end, granularity)
 
-        log = GDAXRatelog(self.RATE_LOG_FILE_PATH)
+        log = GDAXRateLog(self.RATE_LOG_FILE_PATH)
         log.append(rates)
 
         with open(self.RATE_LOG_FILE_PATH, "r") as csv_file:
@@ -91,7 +91,7 @@ class TestGDAXApi(unittest.TestCase):
         api = GDAXApi()
         rates = api.get_historic_rates(product_id, start, end, granularity)
 
-        log = GDAXRatelog(self.RATE_LOG_FILE_PATH)
+        log = GDAXRateLog(self.RATE_LOG_FILE_PATH)
         log.append(rates)
         log.append(rates)
 

@@ -152,7 +152,7 @@ class GDAXRate(object):
                 'opening_price', 'closing_price', 'volume_of_trading']
 
 
-class GDAXRatelog(object):
+class GDAXRateLog(object):
     """
     CSV Log File for storing historical rates.
     """

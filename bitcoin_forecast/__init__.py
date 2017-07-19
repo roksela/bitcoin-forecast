@@ -3,4 +3,4 @@
 
 """
 
-from .gdax_api import GDAXApi, GDAXRatelog
+from .gdax_api import GDAXApi, GDAXRateLog
