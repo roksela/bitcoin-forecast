@@ -2,7 +2,7 @@ import requests
 import logging
 import csv
 import os
-from datetime import datetime
+from datetime import datetime, date
 from operator import itemgetter
 
 
@@ -139,8 +139,24 @@ class GDAXRate(object):
 
     def __init__(self, start_time, end_time, lowest_price, highest_price, opening_price, closing_price,
                  volume_of_trading):
-        self.start_time = datetime.utcfromtimestamp(start_time)
-        self.end_time = datetime.utcfromtimestamp(end_time)
+        if isinstance(start_time, int):
+            self.start_time = datetime.utcfromtimestamp(start_time)
+        elif isinstance(start_time, date):
+            self.start_time = start_time
+        elif isinstance(start_time, str):
+            self.start_time = datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
+        else:
+            raise TypeError('start_time "{}" needs to be one of: date, int, str'.format(start_time))
+
+        if isinstance(end_time, int):
+            self.end_time = datetime.utcfromtimestamp(end_time)
+        elif isinstance(end_time, date):
+            self.end_time = end_time
+        elif isinstance(end_time, str):
+            self.end_time = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
+        else:
+            raise TypeError('end_time "{}" needs to be one of: date, int, str'.format(end_time))
+
         self.lowest_price = lowest_price
         self.highest_price = highest_price
         self.opening_price = opening_price
@@ -183,3 +199,27 @@ class GDAXRateLog(object):
                 writer.writeheader()
             for rate in gdax_rates:
                 writer.writerow(rate.__dict__)
+
+    def read(self):
+        """
+        Read rates from the CSV log.
+
+        :return: a list of GDAXRate objects
+        """
+        assert os.path.isfile(self.file_path), "File '{}' doesn't exist.".format(self.file_path)
+
+        with open(self.file_path) as csv_file:
+            reader = csv.DictReader(csv_file)
+            gdax_rates = []
+            for row in reader:
+                    rate = GDAXRate(row['start_time'],
+                                    row['end_time'],
+                                    float(row['lowest_price']),
+                                    float(row['highest_price']),
+                                    float(row['opening_price']),
+                                    float(row['closing_price']),
+                                    float(row['volume_of_trading']))
+
+                    gdax_rates.append(rate)
+
+        return gdax_rates

@@ -3,7 +3,7 @@ import logging
 import sys
 import csv
 import os
-from bitcoin_forecast import GDAXApi, GDAXRateLog
+from bitcoin_forecast import GDAXApi, GDAXRate, GDAXRateLog
 from datetime import datetime
 
 
@@ -27,6 +27,8 @@ class TestGDAXApi(unittest.TestCase):
     LOG_HEADERS = ['start_time', 'end_time', 'lowest_price', 'highest_price',
                    'opening_price', 'closing_price', 'volume_of_trading']
     RATE_LOG_DAILY_FILE_PATH = 'test_rate_log_2017_05_daily.csv'
+
+    EXISTING_RATE_LOG_FILE_PATH = '../bitcoin_forecast/resources/test_rate_log_2017_sep.csv'
 
     @classmethod
     def setUpClass(cls):
@@ -140,6 +142,26 @@ class TestGDAXApi(unittest.TestCase):
         self.assertEqual(num_of_periods, row_count)
 
         os.remove(self.RATE_LOG_DAILY_FILE_PATH)
+
+    def test_read_gdax_tate_log(self):
+        num_of_periods = 694
+
+        log = GDAXRateLog(self.EXISTING_RATE_LOG_FILE_PATH)
+        rates = log.read()
+
+        self.assertEqual(num_of_periods, len(rates))
+
+        # 2017-09-01 00:00:00,2017-09-01 01:00:00,4743.93,4765.49,4743.94,4765.49,532.0765854100013
+        rate_begin = GDAXRate('2017-09-01 00:00:00', '2017-09-01 01:00:00',
+                              4743.93, 4765.49, 4743.94, 4765.49, 532.0765854100013)
+
+        self.assertEqual(rate_begin, rates[0])
+
+        # 2017-09-29 23:00:00,2017-09-30 00:00:00,4135,4160.72,4160.03,4156.99,263.30476701999953
+        rate_end = GDAXRate('2017-09-29 23:00:00', '2017-09-30 00:00:00',
+                            4135, 4160.72, 4160.03, 4156.99, 263.30476701999953)
+
+        self.assertEqual(rate_end, rates[693])
 
 if __name__ == '__main__':
     unittest.main()
