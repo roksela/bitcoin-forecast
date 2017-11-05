@@ -30,7 +30,7 @@ class GDAXApi(object):
         logging.getLogger('GDAXApi').debug('products={}'.format(products))
         return [product['id'] for product in products]
 
-    def get_historic_rates(self, product_id, start, end, granularity):
+    def get_historic_rates(self, product_id, start, end, granularity=60*60):
         """
         Historic rates for a product.
 
@@ -40,7 +40,7 @@ class GDAXApi(object):
         :param product_id: product e.g. BTC-USD
         :param start: Start time in ISO 8601
         :param end: End time in ISO 8601
-        :param granularity: Desired timeslice in seconds
+        :param granularity: Desired timeslice in seconds (defaults to 1 hour)
         :return: a list of GDAXRate objects
         """
 
@@ -109,8 +109,15 @@ class GDAXApi(object):
         response = requests.get('{}/products/{}/candles'.format(self.API_URL, product_id), params=params)
         raw_partial_rates = response.json()
 
+        logging.getLogger('GDAXApi').debug('response code: {}'.format(response.status_code))
         logging.getLogger('GDAXApi').debug('raw_partial_rates.count={}'.format(len(raw_partial_rates)))
         logging.getLogger('GDAXApi').debug('raw_partial_rates={}'.format(raw_partial_rates))
+
+        if response.status_code != 200:
+            logging.getLogger('GDAXApi').error('error code: {}'.format(response.status_code))
+            if 'message' in raw_partial_rates:
+                logging.getLogger('GDAXApi').error('error message: {}'.format(raw_partial_rates.message))
+
         return raw_partial_rates
 
     def _convert_to_rate(self, raw_rate, granularity):

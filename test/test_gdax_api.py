@@ -22,13 +22,26 @@ class TestGDAXApi(unittest.TestCase):
                           'highest_price': 2316.91, 'opening_price': 2304.06, 'closing_price': 2303.29,
                           'volume_of_trading': 508.03418288999904}
 
-    RATE_LOG_FILE_PATH = 'test_rate_log_2017_05.csv'
+    RATE_LOG_HOURLY_FILE_PATH_1 = 'test_rate_log_2017_05_hourly_1.csv'
+    RATE_LOG_HOURLY_FILE_PATH_2 = 'test_rate_log_2017_06_hourly_2.csv'
     LOG_HEADERS = ['start_time', 'end_time', 'lowest_price', 'highest_price',
                    'opening_price', 'closing_price', 'volume_of_trading']
+    RATE_LOG_DAILY_FILE_PATH = 'test_rate_log_2017_05_daily.csv'
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         logging.basicConfig(format='%(asctime)s | %(name)s | %(levelname)s | %(message)s',
-                            level=logging.INFO, stream=sys.stdout)
+                            level=logging.DEBUG, stream=sys.stdout)
+
+    @classmethod
+    def tearDownClass(cls):
+        # clean after failed tests
+        if os.path.isfile(TestGDAXApi.RATE_LOG_HOURLY_FILE_PATH_1):
+            os.remove(TestGDAXApi.RATE_LOG_HOURLY_FILE_PATH_1)
+        if os.path.isfile(TestGDAXApi.RATE_LOG_HOURLY_FILE_PATH_2):
+            os.remove(TestGDAXApi.RATE_LOG_HOURLY_FILE_PATH_2)
+        if os.path.isfile(TestGDAXApi.RATE_LOG_DAILY_FILE_PATH):
+            os.remove(TestGDAXApi.RATE_LOG_DAILY_FILE_PATH)
 
     def test_get_products(self):
         api = GDAXApi()
@@ -68,10 +81,10 @@ class TestGDAXApi(unittest.TestCase):
         api = GDAXApi()
         rates = api.get_historic_rates(product_id, start, end, granularity)
 
-        log = GDAXRateLog(self.RATE_LOG_FILE_PATH)
+        log = GDAXRateLog(self.RATE_LOG_HOURLY_FILE_PATH_1)
         log.append(rates)
 
-        with open(self.RATE_LOG_FILE_PATH, "r") as csv_file:
+        with open(self.RATE_LOG_HOURLY_FILE_PATH_1, "r") as csv_file:
             reader = csv.reader(csv_file)
             headers = next(reader)
             row_count = sum(1 for row in csv_file)
@@ -79,23 +92,23 @@ class TestGDAXApi(unittest.TestCase):
         self.assertListEqual(headers, self.LOG_HEADERS)
         self.assertEqual(num_of_periods, row_count)
 
-        os.remove(self.RATE_LOG_FILE_PATH)
+        os.remove(self.RATE_LOG_HOURLY_FILE_PATH_1)
 
     def test_gdax_rate_log_append(self):
         product_id = 'BTC-USD'
-        start = '2017-05-01T00:00:00.000Z'
-        end = '2017-06-01T00:00:00.000Z'
+        start = '2017-06-01T00:00:00.000Z'
+        end = '2017-07-01T00:00:00.000Z'
         granularity = 60 * 60
-        num_of_periods = 31 * 24
+        num_of_periods = 30 * 24
 
         api = GDAXApi()
         rates = api.get_historic_rates(product_id, start, end, granularity)
 
-        log = GDAXRateLog(self.RATE_LOG_FILE_PATH)
+        log = GDAXRateLog(self.RATE_LOG_HOURLY_FILE_PATH_2)
         log.append(rates)
         log.append(rates)
 
-        with open(self.RATE_LOG_FILE_PATH, "r") as csv_file:
+        with open(self.RATE_LOG_HOURLY_FILE_PATH_2, "r") as csv_file:
             reader = csv.reader(csv_file)
             headers = next(reader)
             row_count = sum(1 for row in csv_file)
@@ -103,7 +116,30 @@ class TestGDAXApi(unittest.TestCase):
         self.assertListEqual(headers, self.LOG_HEADERS)
         self.assertEqual(2 * num_of_periods, row_count)
 
-        os.remove(self.RATE_LOG_FILE_PATH)
+        os.remove(self.RATE_LOG_HOURLY_FILE_PATH_2)
+
+    def test_gdax_rate_log_daily(self):
+        product_id = 'BTC-USD'
+        start = '2017-05-01T00:00:00.000Z'
+        end = '2017-06-01T00:00:00.000Z'
+        granularity = 60 * 60 * 24
+        num_of_periods = 31
+
+        api = GDAXApi()
+        rates = api.get_historic_rates(product_id, start, end, granularity)
+
+        log = GDAXRateLog(self.RATE_LOG_DAILY_FILE_PATH)
+        log.append(rates)
+
+        with open(self.RATE_LOG_DAILY_FILE_PATH, "r") as csv_file:
+            reader = csv.reader(csv_file)
+            headers = next(reader)
+            row_count = sum(1 for row in csv_file)
+
+        self.assertListEqual(headers, self.LOG_HEADERS)
+        self.assertEqual(num_of_periods, row_count)
+
+        os.remove(self.RATE_LOG_DAILY_FILE_PATH)
 
 if __name__ == '__main__':
     unittest.main()
