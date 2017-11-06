@@ -174,6 +174,36 @@ class GDAXRate(object):
         return ['start_time', 'end_time', 'lowest_price', 'highest_price',
                 'opening_price', 'closing_price', 'volume_of_trading']
 
+    @staticmethod
+    def to_timestamps(gdax_rates):
+        """
+        Gets a list of end times from rates.
+
+        :param gdax_rates: a list of rates
+        :return: a list of end time timestamps
+        """
+        return [gdax_rate.end_time.timestamp() for gdax_rate in gdax_rates]
+
+    @staticmethod
+    def to_dates(gdax_rates):
+        """
+        Gets a list of end times from rates.
+
+        :param gdax_rates: a list of rates
+        :return: a list of end time datetimes
+        """
+        return [gdax_rate.end_time for gdax_rate in gdax_rates]
+
+    @staticmethod
+    def to_prices(gdax_rates):
+        """
+        Gets a list of closing prices.
+
+        :param gdax_rates: a list of rates
+        :return: a list of closing prices
+        """
+        return [gdax_rate.closing_price for gdax_rate in gdax_rates]
+
 
 class GDAXRateLog(object):
     """
@@ -181,6 +211,7 @@ class GDAXRateLog(object):
     """
     def __init__(self, file_path):
         self.file_path = file_path
+        self.gdax_rates = []
 
     def append(self, gdax_rates):
         """
@@ -199,6 +230,8 @@ class GDAXRateLog(object):
                 writer.writeheader()
             for rate in gdax_rates:
                 writer.writerow(rate.__dict__)
+
+        self.gdax_rates.append(gdax_rates)
 
     def read(self):
         """
@@ -222,4 +255,13 @@ class GDAXRateLog(object):
 
                     gdax_rates.append(rate)
 
+        self.gdax_rates = gdax_rates
         return gdax_rates
+
+    def timestamps(self):
+        """
+        Gets a list of end times from this log.
+
+        :return: a list of timestamps
+        """
+        return GDAXRate.to_timestamps(self.gdax_rates)

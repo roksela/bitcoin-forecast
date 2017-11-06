@@ -31,7 +31,7 @@ class BTCForecast(object):
         self._model_type = model_type
         self._model_params = BTCForecast.DEFAULT_SVR_MODEL_PARAMS
 
-        # set up pipeline
+        # set up SVR pipeline
         self._scaler = preprocessing.StandardScaler(copy=True, with_mean=True, with_std=True)
         self._model = SVR(kernel=self._model_params['kernel'],
                           epsilon=self._model_params['epsilon'],
@@ -60,7 +60,7 @@ class BTCForecast(object):
         Learns based on past rates.
 
         :param gdax_rates: list of GDAXRate's
-        :return: current score after learning
+        :return: current score after training
         """
         logging.getLogger('BTCForecast').debug('learning...')
         x_train, y_train = self._transform_training_set(gdax_rates)
@@ -73,8 +73,15 @@ class BTCForecast(object):
         logging.getLogger('BTCForecast').debug('score: {}'.format(score))
         return score
 
-    def predict(self, number_of_steps=None):
+    def predict(self, timestamps):
+        """
+        Predicts a value for each timestamp.
+
+        :param timestamps: a list of timestamps
+        :return: a list or predictions
+        """
         if not self.has_learned:
             raise TypeError('Learning is required before any predictions')
 
-        raise TypeError('This operation is not implemented yet.')
+        x_test = np.reshape(timestamps, (len(timestamps), 1))
+        return self._pipeline.predict(x_test)
