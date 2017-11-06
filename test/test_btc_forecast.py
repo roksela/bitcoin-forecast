@@ -32,6 +32,19 @@ class TestBTCForecast(unittest.TestCase):
 
         forecast = BTCForecast('SVR')
         # forecast.learn(TestBTCForecast.rates_train)
+        self.assertFalse(forecast.has_learned)
+
+    def test_predict_without_learn(self):
+        forecast = BTCForecast('SVR')
+
+        with self.assertRaises(TypeError):
+            forecast.predict()
+
+    def test_learn(self):
+        forecast = BTCForecast()
+        score = forecast.learn(TestBTCForecast.rates_train)
+
+        self.assertGreater(score, 0.9)
 
 if __name__ == '__main__':
     unittest.main()
