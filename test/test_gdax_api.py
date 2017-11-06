@@ -143,7 +143,7 @@ class TestGDAXApi(unittest.TestCase):
 
         os.remove(self.RATE_LOG_DAILY_FILE_PATH)
 
-    def test_read_gdax_tate_log(self):
+    def test_read_gdax_rate_log(self):
         num_of_periods = 694
 
         log = GDAXRateLog(self.EXISTING_RATE_LOG_FILE_PATH)

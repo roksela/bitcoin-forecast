@@ -4,3 +4,4 @@
 """
 
 from .gdax_api import GDAXApi, GDAXRate, GDAXRateLog
+from .btc_forecast import BTCForecast
